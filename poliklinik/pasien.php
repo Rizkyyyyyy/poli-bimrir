@@ -11,19 +11,31 @@ if (!isset($_SESSION['username'])) {
     exit;
 }
 
-// Ambil tanggal sekarang
-$tanggal_sekarang = date('Ymd');
+// Ambil tanggal sekarang (format tahun dan bulan saja)
+$tahun_bulan_sekarang = date('Ym');
 
 // Tambah Data Pasien
 if (isset($_POST['tambah'])) {
     $nama = $_POST['nama'];
     $alamat = $_POST['alamat'];
-    $no_rm_tiga_angka = $_POST['no_rm_tiga_angka']; // Hanya tiga angka terakhir yang bisa diubah
-    $no_rm = $tanggal_sekarang . $no_rm_tiga_angka; // Gabungkan tanggal sekarang dengan tiga angka
     $no_ktp = $_POST['no_ktp'];
-    $poli = $_POST['poli'];  // Menambahkan poli
+    $poli = $_POST['poli'];
+
+    // Ambil jumlah pasien yang sudah ada di database
+    $query_jumlah_pasien = "SELECT COUNT(*) as jumlah FROM pasien";
+    $result_jumlah_pasien = mysqli_query($koneksi, $query_jumlah_pasien);
+    $row_jumlah = mysqli_fetch_assoc($result_jumlah_pasien);
+    $jumlah_pasien = $row_jumlah['jumlah'] + 1; // Jumlah pasien ditambah 1 untuk pasien baru
+
+    // Format nomor RM menjadi 3 digit
+    $no_rm_tiga_angka = sprintf('%03d', $jumlah_pasien);
+
+    // Gabungkan tahun-bulan dengan tiga angka
+    $no_rm = $tahun_bulan_sekarang . $no_rm_tiga_angka;
+
+    // Query untuk memasukkan data pasien baru
     $query = "INSERT INTO pasien (nama, alamat, no_rm, no_ktp, poli) VALUES ('$nama', '$alamat', '$no_rm', '$no_ktp', '$poli')";
-    
+
     if (mysqli_query($koneksi, $query)) {
         header("Location: index.php?page=pasien.php");
     } else {
@@ -36,12 +48,24 @@ if (isset($_POST['update'])) {
     $id = $_POST['id'];
     $nama = $_POST['nama'];
     $alamat = $_POST['alamat'];
-    $no_rm_tiga_angka = $_POST['no_rm_tiga_angka']; // Update tiga angka terakhir saja
-    $no_rm = $tanggal_sekarang . $no_rm_tiga_angka; // Gabungkan kembali dengan tanggal sekarang
     $no_ktp = $_POST['no_ktp'];
-    $poli = $_POST['poli'];  // Menambahkan poli
+    $poli = $_POST['poli'];
+
+    // Ambil jumlah pasien yang sudah ada di database
+    $query_jumlah_pasien = "SELECT COUNT(*) as jumlah FROM pasien";
+    $result_jumlah_pasien = mysqli_query($koneksi, $query_jumlah_pasien);
+    $row_jumlah = mysqli_fetch_assoc($result_jumlah_pasien);
+    $jumlah_pasien = $row_jumlah['jumlah'] + 1;
+
+    // Format nomor RM menjadi 3 digit
+    $no_rm_tiga_angka = sprintf('%03d', $jumlah_pasien);
+
+    // Gabungkan tahun-bulan dengan tiga angka
+    $no_rm = $tahun_bulan_sekarang . $no_rm_tiga_angka;
+
+    // Query untuk mengupdate data pasien
     $query = "UPDATE pasien SET nama='$nama', alamat='$alamat', no_rm='$no_rm', no_ktp='$no_ktp', poli='$poli' WHERE id='$id'";
-    
+
     if (mysqli_query($koneksi, $query)) {
         header("Location: index.php?page=pasien.php");
     } else {
@@ -67,6 +91,14 @@ if (isset($_GET['edit'])) {
     $query_edit = "SELECT * FROM pasien WHERE id='$id'";
     $result_edit = mysqli_query($koneksi, $query_edit);
     $edit_data = mysqli_fetch_assoc($result_edit);
+}
+
+// Jika ada permintaan lihat, ambil data pasien yang akan dilihat
+if (isset($_GET['lihat'])) {
+    $id = $_GET['lihat'];
+    $query_lihat = "SELECT * FROM pasien WHERE id='$id'";
+    $result_lihat = mysqli_query($koneksi, $query_lihat);
+    $lihat_data = mysqli_fetch_assoc($result_lihat);
 }
 ?>
 <!DOCTYPE html>
@@ -113,8 +145,8 @@ if (isset($_GET['edit'])) {
             <div class="mb-3">
                 <label>Nomor Rekam Medik</label>
                 <div class="input-group">
-                    <input type="text" class="form-control" value="<?= $tanggal_sekarang ?>" readonly>
-                    <input type="text" name="no_rm_tiga_angka" class="form-control" placeholder="3 digit angka" maxlength="3" pattern="\d{3}" required>
+                    <input type="text" class="form-control" value="<?= $tahun_bulan_sekarang; ?>" readonly>
+                    <input type="text" class="form-control" value="<?= isset($edit_data) ? substr($edit_data['no_rm'], -3) : sprintf('%03d', mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT COUNT(*) as jumlah FROM pasien"))['jumlah'] + 1); ?>" readonly>
                 </div>
             </div>
             <div class="mb-3">
@@ -163,12 +195,37 @@ if (isset($_GET['edit'])) {
                         <td>
                             <a href="index.php?page=pasien.php&edit=<?= $row['id']; ?>" class="btn btn-warning btn-sm">Edit</a>
                             <a href="index.php?page=pasien.php&hapus=<?= $row['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Yakin ingin menghapus data ini?')">Hapus</a>
+                            <a href="index.php?page=pasien.php&lihat=<?= $row['id']; ?>" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#modalLihat<?= $row['id']; ?>">Lihat</a>
                         </td>
                     </tr>
+
+                    <!-- Modal Detail Pasien -->
+                    <div class="modal fade" id="modalLihat<?= $row['id']; ?>" tabindex="-1" aria-labelledby="modalLihatLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="modalLihatLabel">Detail Pasien</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p><strong>Nama:</strong> <?= $row['nama']; ?></p>
+                                    <p><strong>Alamat:</strong> <?= $row['alamat']; ?></p>
+                                    <p><strong>Nomor RM:</strong> <?= $row['no_rm']; ?></p>
+                                    <p><strong>Nomor KTP:</strong> <?= $row['no_ktp']; ?></p>
+                                    <p><strong>Poli:</strong> <?= $row['poli']; ?></p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 <?php } ?>
             </tbody>
         </table>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

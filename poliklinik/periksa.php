@@ -9,88 +9,65 @@ if (!isset($_SESSION['username'])) {
 
 include 'koneksi.php';
 
-// Tambah Data Periksa
+// Variabel untuk menyimpan pesan sukses
+$pesan_sukses = '';
+
+// Menambahkan Poli
 if (isset($_POST['tambah'])) {
-    $id_dokter = $_POST['id_dokter'];
-    $id_pasien = $_POST['id_pasien'];
-    $id_obat = $_POST['id_obat']; // Ambil id_obat dari form
-    $tanggal = $_POST['tanggal'];
-    $catatan = $_POST['catatan'];
+    $kategori_poli = $_POST['kategori_poli'];
 
-    // Ambil harga obat berdasarkan id_obat
-    $obat_query = "SELECT harga FROM obat WHERE id = '$id_obat'";
-    $obat_result = mysqli_query($koneksi, $obat_query);
-    $obat = mysqli_fetch_assoc($obat_result);
-    $harga_obat = $obat['harga'];
-
-    // Hitung biaya periksa (harga obat + 10.000 untuk jasa periksa)
-    $biaya_periksa = $harga_obat + 10000;
-
-    // Query untuk memasukkan data periksa
-    $query = "INSERT INTO periksa (id_dokter, id_pasien, biaya_periksa, tanggal, catatan, id_obat) VALUES ('$id_dokter', '$id_pasien', '$biaya_periksa', '$tanggal', '$catatan', '$id_obat')";
-    mysqli_query($koneksi, $query);
-    header("Location: index.php?page=periksa.php");
+    $query = "INSERT INTO poli (kategori_poli) VALUES ('$kategori_poli')";
+    if (mysqli_query($koneksi, $query)) {
+        $pesan_sukses = "Data poli berhasil ditambahkan!";
+    } else {
+        $pesan_sukses = "Terjadi kesalahan saat menambahkan data poli.";
+    }
 }
 
-// Edit Data Periksa
+// Mengupdate Poli
 if (isset($_POST['update'])) {
     $id = $_POST['id'];
-    $id_dokter = $_POST['id_dokter'];
-    $id_pasien = $_POST['id_pasien'];
-    $id_obat = $_POST['id_obat']; // Ambil id_obat dari form
-    $tanggal = $_POST['tanggal'];
-    $catatan = $_POST['catatan'];
+    $kategori_poli = $_POST['kategori_poli'];
 
-    // Ambil harga obat berdasarkan id_obat
-    $obat_query = "SELECT harga FROM obat WHERE id = '$id_obat'";
-    $obat_result = mysqli_query($koneksi, $obat_query);
-    $obat = mysqli_fetch_assoc($obat_result);
-    $harga_obat = $obat['harga'];
-
-    // Hitung biaya periksa (harga obat + 10.000 untuk jasa periksa)
-    $biaya_periksa = $harga_obat + 10000;
-
-    // Query untuk mengupdate data periksa
-    $query = "UPDATE periksa SET id_dokter='$id_dokter', id_pasien='$id_pasien', biaya_periksa='$biaya_periksa', tanggal='$tanggal', catatan='$catatan', id_obat='$id_obat' WHERE id='$id'";
-    mysqli_query($koneksi, $query);
-    header("Location: index.php?page=periksa.php");
+    $query = "UPDATE poli SET kategori_poli='$kategori_poli' WHERE id='$id'";
+    if (mysqli_query($koneksi, $query)) {
+        $pesan_sukses = "Data poli berhasil diupdate!";
+    } else {
+        $pesan_sukses = "Terjadi kesalahan saat mengupdate data poli.";
+    }
 }
 
-// Hapus Data Periksa
+// Menghapus Poli
 if (isset($_GET['hapus'])) {
     $id = $_GET['hapus'];
-    $query = "DELETE FROM periksa WHERE id='$id'";
-    mysqli_query($koneksi, $query);
-    header("Location: index.php?page=periksa.php");
+    $query = "DELETE FROM poli WHERE id='$id'";
+    if (mysqli_query($koneksi, $query)) {
+        $pesan_sukses = "Data poli berhasil dihapus!";
+    } else {
+        $pesan_sukses = "Terjadi kesalahan saat menghapus data poli.";
+    }
 }
 
-// Tampil Data Periksa
-$query = "SELECT periksa.id, dokter.nama AS nama_dokter, pasien.nama AS nama_pasien, periksa.biaya_periksa, periksa.tanggal, periksa.catatan, obat.nama_obat 
-          FROM periksa
-          JOIN dokter ON periksa.id_dokter = dokter.id
-          JOIN pasien ON periksa.id_pasien = pasien.id
-          JOIN obat ON periksa.id_obat = obat.id";
+// Menampilkan data poli
+$query = "SELECT * FROM poli";
 $hasil = mysqli_query($koneksi, $query);
 
-// Data Dokter, Pasien, dan Obat untuk Dropdown
-$dokter_query = mysqli_query($koneksi, "SELECT * FROM dokter");
-$pasien_query = mysqli_query($koneksi, "SELECT * FROM pasien");
-$obat_query = mysqli_query($koneksi, "SELECT * FROM obat");
-
-// Jika ada permintaan edit, ambil data periksa yang akan diedit
+// Jika ada permintaan edit, ambil data poli yang akan diedit
 if (isset($_GET['edit'])) {
     $id = $_GET['edit'];
-    $query_edit = "SELECT * FROM periksa WHERE id='$id'";
+    $query_edit = "SELECT * FROM poli WHERE id='$id'";
     $result_edit = mysqli_query($koneksi, $query_edit);
     $edit_data = mysqli_fetch_assoc($result_edit);
 }
+
 ?>
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Periksa</title>
+    <title>Data Poli</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -122,73 +99,36 @@ if (isset($_GET['edit'])) {
 <body>
 <div class="container mt-5">
     <div class="card p-4">
-        <h2 class="text-center"><?= isset($edit_data) ? 'Edit Data Periksa' : 'Tambah Data Periksa'; ?></h2>
-        <!-- Form Tambah atau Edit Periksa -->
+        <h2 class="text-center"><?= isset($edit_data) ? 'Edit Data Poli' : 'Tambah Data Poli'; ?></h2>
+
+        <!-- Tampilkan pesan sukses -->
+        <?php if ($pesan_sukses) { ?>
+            <div class="alert alert-success"><?= $pesan_sukses; ?></div>
+        <?php } ?>
+
+        <!-- Form Tambah atau Edit Poli -->
         <form method="POST" class="w-75 mx-auto">
             <input type="hidden" name="id" value="<?= isset($edit_data) ? $edit_data['id'] : ''; ?>">
             <div class="mb-3">
-                <label>Dokter</label>
-                <select name="id_dokter" class="form-select" required>
-                    <option value="" disabled selected>Pilih Dokter</option>
-                    <?php while ($dokter = mysqli_fetch_assoc($dokter_query)) {
-                        $selected = isset($edit_data) && $edit_data['id_dokter'] == $dokter['id'] ? 'selected' : '';
-                        echo "<option value='{$dokter['id']}' $selected>{$dokter['nama']}</option>";
-                    } ?>
-                </select>
-            </div>
-            <div class="mb-3">
-                <label>Pasien</label>
-                <select name="id_pasien" class="form-select" required>
-                    <option value="" disabled selected>Pilih Pasien</option>
-                    <?php while ($pasien = mysqli_fetch_assoc($pasien_query)) {
-                        $selected = isset($edit_data) && $edit_data['id_pasien'] == $pasien['id'] ? 'selected' : '';
-                        echo "<option value='{$pasien['id']}' $selected>{$pasien['nama']}</option>";
-                    } ?>
-                </select>
-            </div>
-            <div class="mb-3">
-                <label>Biaya Periksa</label>
-                <input type="number" name="biaya_periksa" class="form-control" required value="<?= isset($edit_data) ? $edit_data['biaya_periksa'] : ''; ?>" readonly>
-            </div>
-            <div class="mb-3">
-                <label>Tanggal</label>
-                <input type="date" name="tanggal" class="form-control" required value="<?= isset($edit_data) ? $edit_data['tanggal'] : ''; ?>">
-            </div>
-            <div class="mb-3">
-                <label>Catatan</label>
-                <textarea name="catatan" class="form-control" required><?= isset($edit_data) ? $edit_data['catatan'] : ''; ?></textarea>
-            </div>
-            <div class="mb-3">
-                <label>Obat</label>
-                <select name="id_obat" class="form-select" required>
-                    <option value="" disabled selected>Pilih Obat</option>
-                    <?php while ($obat = mysqli_fetch_assoc($obat_query)) {
-                        $selected = isset($edit_data) && $edit_data['id_obat'] == $obat['id'] ? 'selected' : '';
-                        echo "<option value='{$obat['id']}' $selected>{$obat['nama_obat']}</option>";
-                    } ?>
-                </select>
+                <label>Kategori Poli</label>
+                <input type="text" name="kategori_poli" class="form-control" value="<?= isset($edit_data) ? $edit_data['kategori_poli'] : ''; ?>" required>
             </div>
             <?php if (isset($edit_data)) { ?>
-                <button type="submit" name="update" class="btn btn-success w-100">Update Data</button>
+                <button type="submit" name="update" class="btn btn-success w-100">Update Data Poli</button>
             <?php } else { ?>
-                <button type="submit" name="tambah" class="btn btn-primary w-100">Tambah Data</button>
+                <button type="submit" name="tambah" class="btn btn-primary w-100">Tambah Data Poli</button>
             <?php } ?>
         </form>
     </div>
 
     <div class="mt-5">
-        <h3 class="text-center mb-3">Data Periksa</h3>
-        <!-- Tabel Data Periksa -->
+        <h3 class="text-center mb-3">Data Poli</h3>
+        <!-- Tabel Data Poli -->
         <table class="table table-bordered">
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Dokter</th>
-                    <th>Pasien</th>
-                    <th>Biaya Periksa</th>
-                    <th>Tanggal</th>
-                    <th>Catatan</th>
-                    <th>Obat</th>
+                    <th>Kategori Poli</th>
                     <th>Aksi</th>
                 </tr>
             </thead>
@@ -196,12 +136,7 @@ if (isset($_GET['edit'])) {
                 <?php while ($row = mysqli_fetch_assoc($hasil)) { ?>
                     <tr>
                         <td><?= $row['id']; ?></td>
-                        <td><?= $row['nama_dokter']; ?></td>
-                        <td><?= $row['nama_pasien']; ?></td>
-                        <td>Rp <?= number_format($row['biaya_periksa'], 0, ',', '.'); ?></td>
-                        <td><?= $row['tanggal']; ?></td>
-                        <td><?= $row['catatan']; ?></td>
-                        <td><?= $row['nama_obat']; ?></td>
+                        <td><?= $row['kategori_poli']; ?></td>
                         <td>
                             <a href="index.php?page=periksa.php&edit=<?= $row['id']; ?>" class="btn btn-warning btn-sm">Edit</a>
                             <a href="index.php?page=periksa.php&hapus=<?= $row['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Yakin ingin menghapus data ini?')">Hapus</a>
@@ -212,5 +147,8 @@ if (isset($_GET['edit'])) {
         </table>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
 </body>
 </html>

@@ -11,7 +11,7 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'dokter') {
 $username = $_SESSION['username'];
 
 // Ambil data dokter berdasarkan username
-$query = "SELECT * FROM dokter WHERE username = '$username'"; // Mengambil data dokter berdasarkan username
+$query = "SELECT * FROM dokter WHERE username = '$username'";
 $result = mysqli_query($koneksi, $query);
 
 // Jika dokter ditemukan

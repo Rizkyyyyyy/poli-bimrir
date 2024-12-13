@@ -171,9 +171,9 @@ $hasil_dokter = mysqli_query($koneksi, $query_dokter);
         </form> 
     </div> 
 
-    <!-- Tabel Data Dokter dan Jadwal --> 
-    <div class="mt-5"> 
-        <h3 class="text-center mb-3">Data Dokter dan Jadwal</h3> 
+    <!-- Table untuk Menampilkan Data Dokter --> 
+    <div class="card mt-5 p-4"> 
+        <h2 class="text-center mb-4">Data Dokter</h2> 
         <table class="table table-bordered"> 
             <thead> 
                 <tr> 
@@ -200,7 +200,37 @@ $hasil_dokter = mysqli_query($koneksi, $query_dokter);
                         <td><?= $row['jam_mulai']; ?></td> 
                         <td><?= $row['jam_selesai']; ?></td> 
                         <td> 
+                            <!-- Tombol Lihat menggunakan data-bs-toggle untuk modal -->
+                            <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#lihatModal<?= $row['id']; ?>">Lihat</button>
+                            
+                            <!-- Modal untuk melihat detail dokter -->
+                            <div class="modal fade" id="lihatModal<?= $row['id']; ?>" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="exampleModalLabel">Detail Dokter</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p><strong>Nama:</strong> <?= $row['nama']; ?></p>
+                                            <p><strong>Spesialis:</strong> <?= $row['spesialis']; ?></p>
+                                            <p><strong>Telepon:</strong> <?= $row['telepon']; ?></p>
+                                            <p><strong>Kategori Poli:</strong> <?= $row['kategori_poli']; ?></p>
+                                            <p><strong>Hari Praktek:</strong> <?= $row['hari']; ?></p>
+                                            <p><strong>Jam Mulai:</strong> <?= $row['jam_mulai']; ?></p>
+                                            <p><strong>Jam Selesai:</strong> <?= $row['jam_selesai']; ?></p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tombol Edit -->
                             <a href="index.php?page=dokter.php&edit=<?= $row['id']; ?>" class="btn btn-warning btn-sm">Edit</a> 
+                            
+                            <!-- Tombol Hapus -->
                             <a href="index.php?page=dokter.php&hapus=<?= $row['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Yakin ingin menghapus data ini?')">Hapus</a> 
                         </td> 
                     </tr> 
@@ -209,5 +239,8 @@ $hasil_dokter = mysqli_query($koneksi, $query_dokter);
         </table> 
     </div> 
 </div> 
+
+<!-- Script Bootstrap -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body> 
 </html>
